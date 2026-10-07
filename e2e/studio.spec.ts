@@ -100,6 +100,52 @@ test.describe('theme editing', () => {
   });
 });
 
+test.describe('app theme switching', () => {
+  test('re-reads originals automatically when the app switches themes, keeping edits on top', async ({ page }) => {
+    await openStudio(page);
+    await page.locator('input[type=search]').fill('--color-accent');
+    await page.locator('.tok[data-token="--color-accent"] .tok-row').click();
+    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#1b1b1b');
+    await editToken(page, '--radius-container', 'value', '3px');
+
+    await page.getByRole('switch', { name: 'Ocean theme' }).evaluate((el) => (el as HTMLElement).click()); // the docked panel covers the nav switch
+    await page.locator('input[type=search]').fill('--color-accent');
+    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#0077B6', { timeout: 5000 });
+    await expect(page.locator('[role=status]', { hasText: 'switched to theme "ocean"' })).toBeVisible();
+    // the developer's edit is still there; accent is not marked modified by the switch
+    await expect(page.locator('.chip', { hasText: '1 modified' })).toBeVisible();
+    await expect(page.locator('.tok[data-token="--color-accent"] .dot.on')).toHaveCount(0);
+
+    // Reset now returns to the NEW theme's value, not the old one
+    await editToken(page, '--color-accent', 'Light', '#ff0000');
+    await page.locator('.editor button', { hasText: 'Reset' }).first().click();
+    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#0077B6');
+    await expect(page.locator('main button', { hasText: 'Save' }).or(page.locator('main button').first())).toHaveCSS('background-color', 'rgb(0, 119, 182)');
+  });
+
+  test('the refresh button re-reads the theme on demand', async ({ page }) => {
+    await openStudio(page);
+    await page.locator('button[aria-label="Refresh theme"]').click();
+    await expect(page.locator('[role=status]', { hasText: 'Theme re-read' })).toBeVisible();
+  });
+});
+
+test.describe('header', () => {
+  test('close and minimise stay reachable even with a long version chip and a narrow panel', async ({ page }) => {
+    await openStudio(page);
+    await page.addStyleTag({ content: '.panel { width: 300px !important; }' });
+    const close = page.locator('button[aria-label=Close]');
+    const box = (await close.boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(1280);
+    await page.locator('button[aria-label=Collapse]').click();
+    await expect(page.locator('.tabs')).toHaveCount(0);
+    await page.locator('button[aria-label=Expand]').click();
+    await close.click();
+    await expect(page.locator('.panel')).toHaveCount(0);
+    await expect(page.locator('.launcher')).toBeVisible();
+  });
+});
+
 test.describe('persistence', () => {
   test('refresh offers Continue / Discard and does not apply until chosen', async ({ page }) => {
     await openStudio(page);

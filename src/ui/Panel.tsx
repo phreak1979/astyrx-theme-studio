@@ -40,6 +40,7 @@ export function Panel() {
   const ref = useRef<HTMLDivElement>(null);
   const [confirm, setConfirm] = useState<{ kind: 'light' | 'dark' | 'all'; count: number } | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const [flash, setFlash] = useState('');
 
   // Keep keystrokes typed into the studio away from the host app's own hotkeys.
   useEffect(() => {
@@ -115,20 +116,37 @@ export function Panel() {
         }}
       >
         <span className="title">ASTRYX THEME STUDIO</span>
-        <span className={`chip ${compat.status === 'compatible' ? 'ok' : 'warn'}`} title={compat.message}>
-          Astryx {compat.installed ?? '?'} {compat.status === 'compatible' ? '✓' : '⚠'}
-        </span>
-        <button className="ghost" aria-label="Dock left" title="Dock left" aria-pressed={ui.dock === 'left'} onClick={() => setDock('left')}>◧</button>
-        <button className="ghost" aria-label="Float" title="Float" aria-pressed={ui.dock === 'float'} onClick={() => setDock('float')}>⧉</button>
-        <button className="ghost" aria-label="Dock right" title="Dock right" aria-pressed={ui.dock === 'right'} onClick={() => setDock('right')}>◨</button>
-        <button className="ghost" aria-label={ui.collapsed ? 'Expand' : 'Collapse'} title={ui.collapsed ? 'Expand' : 'Collapse'} onClick={() => session.ui.set({ collapsed: !ui.collapsed })}>
+        <button className="ghost" aria-label="Refresh theme" title="Re-read the app's theme (use after your app switches themes)" onClick={() => {
+          const { changed } = session.refreshOriginals();
+          setFlash(changed ? `Theme re-read (${changed} tokens differ)` : 'Theme re-read: no changes');
+          setTimeout(() => setFlash(''), 2500);
+        }}>↻</button>
+        <button className="ghost" aria-label={ui.collapsed ? 'Expand' : 'Collapse'} title={ui.collapsed ? 'Expand' : 'Minimise to title bar'} onClick={() => session.ui.set({ collapsed: !ui.collapsed })}>
           {ui.collapsed ? '▢' : '–'}
         </button>
-        <button className="ghost" aria-label="Close" title="Close" onClick={() => session.ui.set({ open: false })}>×</button>
+        <button className="ghost" aria-label="Close" title="Close (the 🎨 icon stays)" onClick={() => session.ui.set({ open: false })}>×</button>
       </div>
 
       {!ui.collapsed && (
         <>
+          <div className="subhead">
+            <span className={`chip ${compat.status === 'compatible' ? 'ok' : 'warn'}`} title={compat.message}>
+              Astryx {compat.installed ?? 'version unknown'} {compat.status === 'compatible' ? '✓' : '⚠'}
+            </span>
+            <span className="grow" />
+            <button className="ghost" aria-label="Dock left" title="Dock left" aria-pressed={ui.dock === 'left'} onClick={() => setDock('left')}>◧</button>
+            <button className="ghost" aria-label="Float" title="Float" aria-pressed={ui.dock === 'float'} onClick={() => setDock('float')}>⧉</button>
+            <button className="ghost" aria-label="Dock right" title="Dock right" aria-pressed={ui.dock === 'right'} onClick={() => setDock('right')}>◨</button>
+          </div>
+          {flash && <div className="banner info" role="status">{flash}</div>}
+          {ui.themeNotice && (
+            <div className="banner info" role="status">
+              {ui.themeNotice}
+              <div className="row">
+                <button onClick={() => session.dismissThemeNotice()}>Got it</button>
+              </div>
+            </div>
+          )}
           {compat.status !== 'compatible' && <div className="banner warn">{compat.message}</div>}
           {saved && (
             <div className="banner info" role="alert">

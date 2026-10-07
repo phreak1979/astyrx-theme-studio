@@ -46,7 +46,9 @@ label { display: block; color: var(--ats-muted); font-size: 11px; text-transform
 .resize.corner { right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; }
 .head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--ats-border); cursor: default; user-select: none; }
 .panel.float .head { cursor: move; }
-.head .title { font-weight: 700; letter-spacing: .06em; font-size: 11px; flex: 1; white-space: nowrap; }
+.head .title { font-weight: 700; letter-spacing: .06em; font-size: 11px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.head button { flex: none; }
+.subhead { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-bottom: 1px solid var(--ats-border); }
 .chip { white-space: nowrap; display: inline-block; padding: 0 6px; border-radius: 9px; background: var(--ats-raise); border: 1px solid var(--ats-border); font-size: 11px; color: var(--ats-muted); }
 .chip.ok { color: var(--ats-ok); } .chip.warn { color: var(--ats-warn); } .chip.bad { color: var(--ats-danger); }
 .banner { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--ats-border); }

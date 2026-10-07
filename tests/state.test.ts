@@ -165,8 +165,20 @@ describe('override injector', () => {
     s.resetAll();
     expect(document.querySelector('style[data-astryx-theme-studio]')).toBeNull();
     s.setValue('--radius-element', 'both', '3px');
-    stop();
+    stop.dispose();
     expect(document.querySelector('style[data-astryx-theme-studio]')).toBeNull();
+  });
+  it('suspend removes the style while reading and restores it after', () => {
+    const s = mk();
+    const inj = startOverrideInjector(s);
+    s.setValue('--radius-element', 'both', '2px');
+    let during = true;
+    inj.suspend(() => {
+      during = !!document.querySelector('style[data-astryx-theme-studio]');
+    });
+    expect(during).toBe(false);
+    expect(document.querySelector('style[data-astryx-theme-studio]')).not.toBeNull();
+    inj.dispose();
   });
   it('targets the root theme wrapper by name so the app Theme cannot shadow the override', () => {
     const s = mk();

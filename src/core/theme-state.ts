@@ -227,6 +227,23 @@ export class ThemeStore {
     return true;
   }
 
+  /**
+   * Re-read what "original" means after the app switched themes. Edits stay (they are the developer's
+   * work) unless they now equal the new original.
+   */
+  rebase(hostValues: Record<string, Pair>): { changed: number } {
+    let changed = 0;
+    const next: Record<string, Pair> = {};
+    for (const e of this.registry.entries) {
+      next[e.name] = hostValues[e.name] ?? { light: e.light, dark: e.dark };
+      if (!pairsEqual(next[e.name], this.originals[e.name])) changed++;
+    }
+    this.originals = next;
+    for (const [t, p] of Object.entries(this.overrides)) if (pairsEqual(p, next[t])) delete this.overrides[t];
+    this.commit();
+    return { changed };
+  }
+
   // ---- resets ----
   resetToken(token: string): void {
     if (!this.isModified(token)) return;

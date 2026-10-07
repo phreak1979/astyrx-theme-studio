@@ -2,13 +2,13 @@ import { tokenDefaults } from '@astryxdesign/core/theme';
 import { ImpactEngine, type ImpactResult } from '../core/impact-engine';
 import { ImpactIndex, currentRoute } from '../core/impact-index';
 import { createMiniStore, type MiniStore } from '../core/mini-store';
-import { startOverrideInjector } from '../core/override-injector';
+import { startOverrideInjector, type OverrideInjector } from '../core/override-injector';
 import { ThemeStore, type Mode } from '../core/theme-state';
 import { buildRegistry, readHostValues, type TokenRegistry } from '../core/token-registry';
 import { injectedAstryxVersion } from '../core/version';
 import { detectComponent, type ComponentInfo } from '../inspector/component-detector';
 import { startInspect } from '../inspector/element-selector';
-import { isStudioNode } from '../inspector/ids';
+import { isStudioNode, STYLE_MARKER } from '../inspector/ids';
 import { OverlayLayer, type OverlayBox } from '../inspector/overlay';
 import { inspectElement, type ElementReport } from '../inspector/token-detector';
 import { clearSaved, loadSaved, loadUiState, saveUiState, startAutosave, WORKING_THEME_KEY, type SavedWorkingTheme } from '../persistence/local-storage';
@@ -58,6 +58,8 @@ export interface UiState {
   restorePrompt: SavedWorkingTheme | null;
   /** Token the Theme tab should reveal and expand. */
   focusToken: string | null;
+  /** Shown after the app switched themes underneath the developer's edits. */
+  themeNotice: string | null;
 }
 
 const PERSISTED: (keyof UiState)[] = ['open', 'collapsed', 'dock', 'width', 'height', 'x', 'y', 'launcher', 'launcherMini', 'dimOthers'];
@@ -79,6 +81,7 @@ export class StudioSession {
   private focusEl: Element | null = null;
   private focusTimer: ReturnType<typeof setTimeout> | undefined;
   private autosaveStop: (() => void) | null = null;
+  private injector: OverrideInjector | null = null;
 
   constructor(readonly options: StudioOptions = {}) {
     this.astryxVersion = options.astryxVersion ?? injectedAstryxVersion();
@@ -116,6 +119,7 @@ export class StudioSession {
       verify: null,
       restorePrompt: restore && Object.keys(restore.theme.overrides).length ? restore : null,
       focusToken: null,
+      themeNotice: null,
     });
   }
 
@@ -127,7 +131,12 @@ export class StudioSession {
   start(): void {
     if (this.refs++ > 0) return;
     const d = this.disposers;
-    d.push(startOverrideInjector(this.store));
+    this.injector = startOverrideInjector(this.store);
+    d.push(() => {
+      this.injector?.dispose();
+      this.injector = null;
+    });
+    d.push(this.watchAppTheme());
     d.push(this.watchAppMode());
     d.push(this.listenShortcuts());
     if (this.persist) {
@@ -158,6 +167,67 @@ export class StudioSession {
     this.overlay.unmount();
     this.impact.dispose();
     for (const dispose of this.disposers.splice(0).reverse()) dispose();
+  }
+
+  // ---- app theme changes ----
+  /**
+   * Re-read the app's real theme values. Overrides are lifted for the read (synchronously, so nothing
+   * paints in between), then restored. Call after the app switches themes.
+   */
+  refreshOriginals(): { changed: number } {
+    const read = () => readHostValues(this.registry);
+    const host = this.injector ? this.injector.suspend(read) : read();
+    const res = this.store.rebase(host);
+    this.impact.invalidate();
+    if (this.ui.get().impactToken) this.runImpact(true);
+    return res;
+  }
+
+  dismissThemeNotice(): void {
+    this.ui.set({ themeNotice: null });
+  }
+
+  private watchAppTheme(): () => void {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let lastRoot = this.store.getSnapshot().rootThemeName;
+    const schedule = (delay: number) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const { changed } = this.refreshOriginals();
+        const snap = this.store.getSnapshot();
+        const switched = snap.rootThemeName !== lastRoot;
+        lastRoot = snap.rootThemeName;
+        if (switched && changed > 0) {
+          this.ui.set({
+            themeNotice: snap.modified.length
+              ? `The app switched to theme "${snap.rootThemeName ?? 'unknown'}". Originals were re-read; your ${snap.modified.length} edit(s) still apply on top.`
+              : `The app switched to theme "${snap.rootThemeName ?? 'unknown'}". Originals were re-read.`,
+          });
+        }
+      }, delay);
+    };
+    // A root <Theme> swap changes data-astryx-theme on <html>.
+    const unsub = this.store.subscribe(() => {
+      const root = this.store.getSnapshot().rootThemeName;
+      if (root !== lastRoot) schedule(150);
+    });
+    // Built themes and runtime themes both add or remove <style>/<link> elements in <head>.
+    const ours = (n: Node) => n instanceof Element && n.hasAttribute(STYLE_MARKER);
+    const mo = new MutationObserver((records) => {
+      const relevant = records.some((r) => {
+        const touched = [...Array.from(r.addedNodes), ...Array.from(r.removedNodes)];
+        if (touched.length) return touched.some((n) => !ours(n));
+        const el = r.target instanceof Element ? r.target : r.target.parentElement;
+        return !(el && ours(el));
+      });
+      if (relevant) schedule(300);
+    });
+    mo.observe(document.head, { childList: true, subtree: true, characterData: true });
+    return () => {
+      clearTimeout(timer);
+      unsub();
+      mo.disconnect();
+    };
   }
 
   // ---- restore prompt ----

@@ -34,7 +34,13 @@ export function buildOverrideCss(snap: StoreSnapshot, registryHas: (t: string) =
  * Keep a single unlayered <style> element in <head> in sync with the store.
  * Unlayered declarations beat every `@layer`, so no !important or component CSS is needed.
  */
-export function startOverrideInjector(store: ThemeStore, doc: Document = document): () => void {
+export interface OverrideInjector {
+  dispose: () => void;
+  /** Run `fn` with the overrides removed (e.g. to read the app's real theme), then put them back. */
+  suspend: <T>(fn: () => T) => T;
+}
+
+export function startOverrideInjector(store: ThemeStore, doc: Document = document): OverrideInjector {
   let el: HTMLStyleElement | null = null;
   const apply = () => {
     const css = buildOverrideCss(store.getSnapshot(), (t) => store.registry.byName.has(t));
@@ -52,9 +58,20 @@ export function startOverrideInjector(store: ThemeStore, doc: Document = documen
   };
   apply();
   const unsub = store.subscribe(apply);
-  return () => {
-    unsub();
-    el?.remove();
-    el = null;
+  return {
+    dispose: () => {
+      unsub();
+      el?.remove();
+      el = null;
+    },
+    suspend: (fn) => {
+      const held = el;
+      held?.remove();
+      try {
+        return fn();
+      } finally {
+        if (held) doc.head.appendChild(held);
+      }
+    },
   };
 }
