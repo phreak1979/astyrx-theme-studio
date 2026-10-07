@@ -1,0 +1,60 @@
+{
+  "name": "astryx-theme-studio",
+  "version": "0.1.0",
+  "description": "Development-only visual theming studio for Astryx apps",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "workspaces": [
+    "examples/*"
+  ],
+  "sideEffects": false,
+  "main": "./dist/dev.js",
+  "types": "./dist/dev.d.ts",
+  "exports": {
+    "./dev": {
+      "types": "./dist/dev.d.ts",
+      "default": "./dist/dev.js"
+    },
+    "./package.json": "./package.json",
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "prepare": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "example:dev": "npm run dev -w examples/vite-app",
+    "example:build": "npm run build -w examples/vite-app",
+    "example:verify-prod": "npm run verify-prod -w examples/vite-app"
+  },
+  "peerDependencies": {
+    "@astryxdesign/core": "^0.6.5",
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
+  },
+  "devDependencies": {
+    "@astryxdesign/core": "^0.6.5",
+    "@playwright/test": "^1.63.0",
+    "@stylexjs/stylex": "^0.19.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^26.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0"
+  },
+  "dependencies": {
+    "vite": "^7.3.7"
+  }
+}
