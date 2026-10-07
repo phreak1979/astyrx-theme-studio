@@ -104,14 +104,33 @@ Astryx does not export its `package.json`, so the studio cannot read its own pee
 
 ```ts
 // vite.config.ts
-import { astryxThemeStudio } from 'astryx-theme-studio/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 
-export default defineConfig({
-  plugins: [react(), astryxThemeStudio()],
-});
+// Loaded defensively so a build where this dev dependency is not installed still works.
+async function studioVersionPlugin() {
+  try {
+    const { astryxThemeStudio } = await import('astryx-theme-studio/vite');
+    return astryxThemeStudio();
+  } catch {
+    return null;
+  }
+}
+
+export default defineConfig(async () => ({
+  plugins: [react(), await studioVersionPlugin()],
+}));
 ```
 
 Or pass it directly: `<AstryxThemeStudio astryxVersion="0.6.5" />`. Without either, the studio still works but shows a "version unknown" compatibility warning.
+
+## Installing as a dev dependency
+
+`-D` is correct: this is development tooling, so it must not be a runtime dependency. Build machines normally install dev dependencies anyway (Vite and TypeScript are dev dependencies too). If you ever build with `npm ci --omit=dev` or `NODE_ENV=production`, the package is simply absent, and that is safe:
+
+- the dev-only `import()` in `main.tsx` is statically unreachable, so the build does not need the package (verified);
+- the `vite.config.ts` snippet above tolerates a missing package;
+- one thing to watch: if your build script runs `tsc` over `src/`, the file `src/dev/mountAstryxThemeStudio.tsx` imports the package's types and would fail to compile without it. Either install dev dependencies for the build (the usual case) or exclude `src/dev` in your build tsconfig.
 
 ## Why dynamic import is required
 
