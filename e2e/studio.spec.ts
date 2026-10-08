@@ -25,10 +25,10 @@ test.describe('theme editing', () => {
   test('a valid edit updates the app live; an invalid one is rejected', async ({ page }) => {
     await openStudio(page);
     await editToken(page, '--color-accent', 'Light', '#ff0000');
-    await expect(page.locator('main button').first()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('background-color', 'rgb(255, 0, 0)');
     await page.locator('input[aria-label="--color-accent Light"]').fill('#12');
     await expect(page.locator('.err')).toBeVisible();
-    await expect(page.locator('main button').first()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('background-color', 'rgb(255, 0, 0)');
   });
 
   test('modified tracking, original value and reset', async ({ page }) => {
@@ -67,7 +67,7 @@ test.describe('theme editing', () => {
   test('nested Theme regions keep their own values unless opted in', async ({ page }) => {
     await openStudio(page, '/settings');
     await editToken(page, '--color-accent', 'Light', '#ff0000');
-    await expect(page.locator('main button').first()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(page.locator('main button', { hasText: 'Save changes' })).toHaveCSS('background-color', 'rgb(255, 0, 0)');
     await expect(page.locator('[data-testid=nested-region] button')).toHaveCSS('background-color', 'rgb(192, 38, 211)');
     await page.locator('label', { hasText: 'Also override nested' }).locator('input').check();
     await expect(page.locator('[data-testid=nested-region] button')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
@@ -108,10 +108,10 @@ test.describe('app theme switching', () => {
     await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#1b1b1b');
     await editToken(page, '--radius-container', 'value', '3px');
 
-    await page.getByRole('switch', { name: 'Ocean theme' }).evaluate((el) => (el as HTMLElement).click()); // the docked panel covers the nav switch
+    await page.getByRole('switch', { name: 'DCP Ocean Blue' }).evaluate((el) => (el as HTMLElement).click()); // the docked panel covers the nav switch
     await page.locator('input[type=search]').fill('--color-accent');
-    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#0077B6', { timeout: 5000 });
-    await expect(page.locator('[role=status]', { hasText: 'switched to theme "ocean"' })).toBeVisible();
+    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#5490B8', { timeout: 5000 });
+    await expect(page.locator('[role=status]', { hasText: 'switched to theme "dcp-ocean-blue"' })).toBeVisible();
     // the developer's edit is still there; accent is not marked modified by the switch
     await expect(page.locator('.chip', { hasText: '1 modified' })).toBeVisible();
     await expect(page.locator('.tok[data-token="--color-accent"] .dot.on')).toHaveCount(0);
@@ -119,8 +119,8 @@ test.describe('app theme switching', () => {
     // Reset now returns to the NEW theme's value, not the old one
     await editToken(page, '--color-accent', 'Light', '#ff0000');
     await page.locator('.editor button', { hasText: 'Reset' }).first().click();
-    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#0077B6');
-    await expect(page.locator('main button', { hasText: 'Save' }).or(page.locator('main button').first())).toHaveCSS('background-color', 'rgb(0, 119, 182)');
+    await expect(page.locator('input[aria-label="--color-accent Light"]')).toHaveValue('#5490B8');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('background-color', 'rgb(84, 144, 184)');
   });
 
   test('the refresh button re-reads the theme on demand', async ({ page }) => {
@@ -157,7 +157,7 @@ test.describe('persistence', () => {
     await expect(page.locator('[role=alert]', { hasText: 'Working theme found' })).toBeVisible();
     expect(await overrideCss(page)).toBe('');
     await page.locator('button', { hasText: 'Continue Editing' }).click();
-    await expect(page.locator('main button').first()).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('background-color', 'rgb(255, 0, 0)');
     await page.waitForTimeout(500);
     await page.reload();
     await expect(page.locator('.panel')).toBeVisible();
@@ -269,18 +269,18 @@ test.describe('components', () => {
     await openStudio(page);
     await openTab(page);
     await expect(row(page, 'astryx-card')).toBeVisible();
-    await expect(row(page, 'astryx-text-input')).toHaveCount(0);
-    await page.locator('nav button', { hasText: 'Customers' }).click();
-    await expect(row(page, 'astryx-text-input')).toBeVisible({ timeout: 5000 });
+    await expect(row(page, 'astryx-banner')).toHaveCount(0);
+    await page.locator('nav button', { hasText: 'Showcase' }).click();
+    await expect(row(page, 'astryx-banner')).toBeVisible({ timeout: 5000 });
   });
 
   test('Rescan picks up a component rendered after the last scan', async ({ page }) => {
     await openStudio(page);
     await openTab(page);
-    await expect(row(page, 'astryx-text-input')).toHaveCount(0);
-    await page.locator('nav button', { hasText: 'Customers' }).click();
+    await expect(row(page, 'astryx-banner')).toHaveCount(0);
+    await page.locator('nav button', { hasText: 'Showcase' }).click();
     await page.locator('button', { hasText: 'Rescan' }).click();
-    await expect(row(page, 'astryx-text-input')).toBeVisible();
+    await expect(row(page, 'astryx-banner')).toBeVisible();
   });
 });
 
@@ -311,7 +311,7 @@ test.describe('impact', () => {
     await page.locator('input[aria-label="Token to analyse"]').fill('--radius-element');
     await page.locator('button', { hasText: /^Show$/ }).click();
     await page.locator('button', { hasText: 'Verify' }).click();
-    await expect(page.getByTestId('verify')).toContainText(/5 of 5 listed elements change right now; the other 0/);
+    await expect(page.getByTestId('verify')).toContainText(/Cross-check: \d+ of \d+ listed elements change right now/);
     expect(await page.locator('style[data-astryx-theme-studio=sentinel]').count()).toBe(0);
   });
 
@@ -355,7 +355,7 @@ test.describe('export / import', () => {
     await expect(page.locator('strong', { hasText: '1 token changed' })).toBeVisible();
     expect(await overrideCss(page)).toBe('');
     await page.locator('button', { hasText: 'Apply' }).click();
-    await expect(page.locator('main button').first()).toHaveCSS('border-radius', '3px');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('border-radius', '3px');
   });
 
   test('bad JSON is rejected and does not change the theme', async ({ page }) => {

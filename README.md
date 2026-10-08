@@ -200,6 +200,54 @@ Change or disable any of them: `<AstryxThemeStudio shortcuts={{ open: 'Mod+Shift
 - **Impact accuracy.** Impact reads your stylesheets. Cross-origin stylesheets cannot be read; the studio says so and labels results as observed rather than complete.
 - **Contrast checks** cover a fixed set of text/surface/accent pairs and are shown before export; you can make failures block export.
 
+## DCP Ocean Blue theme (example app)
+
+The example app ships a theme built from the `dcp-ocean-blue.png` mockup: Deep Space Blue `#0E354F`, Air Force Blue `#5490B8`, Charcoal Blue `#323949`, Inter, light and dark. Turn on **DCP Ocean Blue** in the example's top bar to see the DCP Studio dashboard (Dashboard route) and alerts / form elements (Showcase route) with it.
+
+Files: `examples/vite-app/src/theme/dcpOceanBlueTheme.ts` (the theme), `src/components/dcp/` and `src/pages/Showcase.tsx` (the demo layout).
+
+### Use it in another app
+
+1. Copy `dcpOceanBlueTheme.ts` into your app (for example `src/theme/`). It only imports `defineTheme` from `@astryxdesign/core/theme`.
+2. Install the font and import it once in your entry file:
+
+   ```bash
+   npm install @fontsource-variable/inter
+   ```
+
+   ```tsx
+   import '@fontsource-variable/inter';
+   ```
+
+3. Pass the theme to Astryx's `Theme` provider:
+
+   ```tsx
+   import { Theme } from '@astryxdesign/core/theme';
+   import { dcpOceanBlueTheme } from './theme/dcpOceanBlueTheme';
+
+   <Theme theme={dcpOceanBlueTheme} mode="light">
+     <App />
+   </Theme>
+   ```
+
+4. Optional, for production: pre-build the CSS so no styles are injected at runtime:
+
+   ```bash
+   npx @astryxdesign/cli theme build src/theme/dcpOceanBlueTheme.ts
+   ```
+
+Keep editing it with Theme Studio like any other theme: tune tokens, then **Export** and merge the token map back into the file (Theme Studio exports tokens only; the `typography` and `components` blocks in the file are maintained by hand).
+
+### Known differences from the mockup
+
+- Nested `<Theme>` regions (the sidebar, the Showcase panels) use `dcpOceanBlueRegionTheme`, a separately named copy: Astryx injects unbuilt themes by name, and a nested region sharing the app theme's name removes the app's styles when it unmounts. Pre-building the theme (step 4) avoids this.
+- Astryx defines `--color-background-body` but does not paint it on `<body>`; add `body { background: var(--color-background-body); }` in your app CSS (the example scopes it to the DCP theme).
+- The sidebar and the example's top bar share the theme's `--dcp-chrome-background` token (Deep Space Blue in light mode, darker navy in dark mode). The token travels with the theme file, but using it is app code: put `background: var(--dcp-chrome-background)` on an element outside any forced-dark nested `<Theme>`, then wrap the content in `<Theme theme={dcpOceanBlueRegionTheme} mode="dark">` for light text. `--dcp-chrome-shadow` is the matching shadow (dark in light mode, soft white glow in dark mode): `box-shadow: var(--dcp-chrome-shadow)`.
+- The bar chart and donut rings are small SVG components (Astryx has no chart component).
+- Header search, date range and row menus are visual only.
+- Palette colours use the printed hex values; the mockup's rendered pixels differ slightly (for example its primary button is closer to `#468EBA`).
+- Banner "View details" actions are ghost buttons passed as `endContent`; spacing differs by a few pixels.
+
 ## Production build
 
 ```bash

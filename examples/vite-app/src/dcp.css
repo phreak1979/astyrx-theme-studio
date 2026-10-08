@@ -1,0 +1,52 @@
+.dcp-frame { display: grid; grid-template-columns: 220px 1fr; border-radius: var(--radius-container); overflow: hidden; border: 1px solid var(--color-border); background: var(--color-background-body); min-height: 760px; }
+.dcp-sidebar { display: flex; flex-direction: column; padding: 16px 12px; gap: 4px; color: var(--color-text-primary); }
+.dcp-brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; font-weight: 700; font-size: 18px; }
+.dcp-sidebar-spacer { flex: 1; }
+.dcp-content { display: flex; flex-direction: column; gap: 16px; padding: 14px 16px 20px; min-width: 0; }
+.dcp-header { display: flex; align-items: center; gap: 12px; }
+.dcp-header .dcp-search { flex: 1; }
+.dcp-userchip { display: flex; align-items: center; gap: 8px; }
+.dcp-titlebar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dcp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.dcp-kpi { display: flex; gap: 12px; align-items: center; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); }
+.dcp-kpi-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-element); background: var(--color-accent-muted); color: var(--color-icon-accent); }
+.dcp-kpi-body { flex: 1; min-width: 0; }
+.dcp-kpi-value { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.dcp-kpi-note { font-size: 11px; color: var(--color-text-secondary); }
+.dcp-kpi-note.up { color: var(--color-text-green); }
+.dcp-row { display: grid; grid-template-columns: 1.7fr 1fr; gap: 12px; }
+.dcp-panel { padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-container); background: var(--color-background-card); min-width: 0; }
+.dcp-panel-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.dcp-legend { display: flex; gap: 14px; justify-content: center; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.dcp-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.dcp-activity { display: flex; flex-direction: column; }
+.dcp-activity-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.dcp-activity-item:last-child { border-bottom: 0; }
+.dcp-activity-dot { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; flex: none; }
+.dcp-prog { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.dcp-prog > :first-child { flex: 1; }
+.dcp-proglabel { font-size: 11px; color: var(--color-text-secondary); }
+.dcp-proj { display: flex; align-items: center; gap: 8px; }
+.dcp-proj-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--color-accent-muted); color: var(--color-icon-accent); }
+.dcp-showcase-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dcp-showcase-mode { padding: 16px; border-radius: var(--radius-container); background: var(--color-background-body); display: flex; flex-direction: column; gap: 12px; }
+.dcp-forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: end; }
+.dcp-swatches { display: flex; gap: 16px; flex-wrap: wrap; }
+.dcp-swatch { width: 140px; border-radius: var(--radius-container); overflow: hidden; border: 1px solid var(--color-border); background: var(--color-background-card); }
+.dcp-swatch-color { height: 90px; display: grid; place-items: center; color: #fff; font-weight: 600; }
+.dcp-swatch-text { padding: 8px 10px; font-size: 12px; color: var(--color-text-secondary); }
+@media (max-width: 900px) { .dcp-frame { grid-template-columns: 1fr; } .dcp-kpis { grid-template-columns: repeat(2, 1fr); } .dcp-row { grid-template-columns: 1fr; } }
+.dcp-sidebar button { justify-content: flex-start; }
+.dcp-activity-item > div:last-child { display: flex; flex-direction: column; }
+.dcp-proj, .dcp-proglabel { white-space: nowrap; }
+.dcp-panel .astryx-badge { max-width: none; }
+.dcp-panel th { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); }
+.dcp-panel thead { background: var(--color-background-muted); }
+.dcp-chrome { background: var(--dcp-chrome-background); }
+.dcp-chrome > [data-theme] { height: 100%; }
+.dcp-sidebar { height: 100%; box-sizing: border-box; }
+.dcp-sidebar button[data-variant="secondary"] { background: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.app-nav-dcp { background: var(--dcp-chrome-background); border-bottom-color: transparent; box-shadow: var(--dcp-chrome-shadow); position: relative; }
+.app-nav-inner { display: flex; align-items: center; gap: 8px; }
+/* Paint the theme's page background (Astryx sets the token but does not apply it to <body>). */
+html[data-astryx-theme="dcp-ocean-blue"] body { background: var(--color-background-body); }

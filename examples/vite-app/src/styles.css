@@ -1,6 +1,6 @@
 body { margin: 0; }
 .app-nav { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-bottom: 1px solid var(--color-border-primary, #ddd); background: var(--color-background-surface); }
 .app-nav strong { margin-right: 16px; }
-.app-main { padding: 24px; max-width: 1080px; margin: 0 auto; }
+.app-main { padding: 24px; max-width: 1320px; margin: 0 auto; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .nested-region { padding: 16px; border-radius: 12px; background: var(--color-background-body); }

@@ -25,7 +25,7 @@ test.describe('production build (vite preview)', () => {
     expect(reads).toEqual([]);
 
     // A saved development theme is never restored in production.
-    await expect(page.locator('main button').first()).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(page.locator('main button', { hasText: 'New order' })).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
 
     // Shortcuts do nothing.
     await page.keyboard.press('Control+Shift+A');

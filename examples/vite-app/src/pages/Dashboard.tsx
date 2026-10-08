@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Badge } from '@astryxdesign/core/Badge';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
 import { Dialog } from '@astryxdesign/core/Dialog';
@@ -9,6 +8,7 @@ import { Popover } from '@astryxdesign/core/Popover';
 import { Table } from '@astryxdesign/core/Table';
 import { Text } from '@astryxdesign/core/Text';
 import { VStack } from '@astryxdesign/core/VStack';
+import DcpDashboard from '../components/dcp/DcpDashboard';
 
 interface Order extends Record<string, unknown> {
   id: string;
@@ -27,22 +27,7 @@ export default function Dashboard() {
   const [open, setOpen] = useState(false);
   return (
     <VStack gap={4}>
-      <Heading level={1}>Dashboard</Heading>
-      <div className="grid">
-        {[
-          ['Revenue', '$48,210', 'success'],
-          ['Orders', '312', 'info'],
-          ['Refunds', '9', 'warning'],
-        ].map(([label, value, variant]) => (
-          <Card key={label} elevation="low">
-            <VStack gap={1}>
-              <Text type="supporting">{label}</Text>
-              <Heading level={3}>{value}</Heading>
-              <Badge label={label === 'Refunds' ? 'Watch' : 'Healthy'} variant={variant as 'success'} />
-            </VStack>
-          </Card>
-        ))}
-      </div>
+      <DcpDashboard />
       <Card>
         <VStack gap={2}>
           <Heading level={3}>Recent orders</Heading>
