@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import type { Dock, Tab } from '../dev/session';
 import { Confirm, plural } from './common';
+import { ComponentsPanel } from './ComponentsPanel';
 import { ExportPanel } from './ExportPanel';
 import { ImpactPanel } from './ImpactPanel';
 import { InspectPanel } from './InspectPanel';
@@ -10,6 +11,7 @@ import { useSession, useTheme, useUi } from './hooks';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'theme', label: 'Theme' },
   { id: 'inspect', label: 'Inspect' },
+  { id: 'components', label: 'Components' },
   { id: 'impact', label: 'Impact' },
   { id: 'export', label: 'Export' },
 ];
@@ -179,6 +181,7 @@ export function Panel() {
           <div className="body" role="tabpanel">
             {ui.tab === 'theme' && <ThemePanel />}
             {ui.tab === 'inspect' && <InspectPanel />}
+            {ui.tab === 'components' && <ComponentsPanel />}
             {ui.tab === 'impact' && <ImpactPanel />}
             {ui.tab === 'export' && <ExportPanel />}
           </div>

@@ -7,6 +7,7 @@ import { ThemeStore, type Mode } from '../core/theme-state';
 import { buildRegistry, readHostValues, type TokenRegistry } from '../core/token-registry';
 import { injectedAstryxVersion } from '../core/version';
 import { detectComponent, type ComponentInfo } from '../inspector/component-detector';
+import { scanComponents, type ComponentScan } from '../inspector/component-scan';
 import { startInspect } from '../inspector/element-selector';
 import { isStudioNode, STYLE_MARKER } from '../inspector/ids';
 import { OverlayLayer, type OverlayBox } from '../inspector/overlay';
@@ -30,7 +31,7 @@ export interface StudioOptions {
   profileThresholdMs?: number;
 }
 
-export type Tab = 'theme' | 'inspect' | 'impact' | 'export';
+export type Tab = 'theme' | 'inspect' | 'components' | 'impact' | 'export';
 export type Dock = 'left' | 'right' | 'float';
 
 export interface UiState {
@@ -50,6 +51,8 @@ export interface UiState {
   report: ElementReport | null;
   /** Report for the Astryx component root when the selection is an inner part of it. */
   rootReport: ElementReport | null;
+  /** Last page scan for the Components tab; null until the tab has been shown. */
+  scan: ComponentScan | null;
   impactToken: string | null;
   impact: ImpactResult | null;
   /** Result of the slower sentinel-diff check against the stylesheet scan. */
@@ -77,6 +80,7 @@ export class StudioSession {
   private disposers: (() => void)[] = [];
   private stopInspectFn: (() => void) | null = null;
   private stopRouteWatch: (() => void) | null = null;
+  private stopComponentsWatch: (() => void) | null = null;
   private hover: Element | null = null;
   private focusEl: Element | null = null;
   private focusTimer: ReturnType<typeof setTimeout> | undefined;
@@ -114,6 +118,7 @@ export class StudioSession {
       component: null,
       report: null,
       rootReport: null,
+      scan: null,
       impactToken: null,
       impact: null,
       verify: null,
@@ -139,6 +144,7 @@ export class StudioSession {
     d.push(this.watchAppTheme());
     d.push(this.watchAppMode());
     d.push(this.listenShortcuts());
+    d.push(this.watchComponentsTab());
     if (this.persist) {
       d.push(
         this.ui.subscribe(() => {
@@ -308,6 +314,12 @@ export class StudioSession {
     this.syncOverlay();
   }
 
+  // ---- components ----
+  /** Scan the current page for Astryx components. Read-only; called when the Components tab is shown. */
+  scanComponents(): void {
+    this.ui.set({ scan: scanComponents(document) });
+  }
+
   // ---- impact ----
   showImpact(token: string): void {
     this.stopInspecting();
@@ -401,6 +413,14 @@ export class StudioSession {
   // ---- watchers ----
   private startRouteWatch(): void {
     if (this.stopRouteWatch) return;
+    this.stopRouteWatch = this.watchRoute(() => this.runImpact(true));
+  }
+
+  /**
+   * Run `onChange` (after the new route has had time to render) whenever the route changes.
+   * Returns the function that removes every listener it added.
+   */
+  private watchRoute(onChange: () => void): () => void {
     let last = currentRoute();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const changed = () => {
@@ -409,7 +429,7 @@ export class StudioSession {
       last = now;
       clearTimeout(timer);
       // Let the new route render before scanning it.
-      timer = setTimeout(() => this.runImpact(true), 350);
+      timer = setTimeout(onChange, 350);
     };
     const nav = (window as unknown as { navigation?: EventTarget }).navigation;
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -417,12 +437,38 @@ export class StudioSession {
     else interval = setInterval(changed, 400);
     window.addEventListener('popstate', changed);
     window.addEventListener('hashchange', changed);
-    this.stopRouteWatch = () => {
+    return () => {
       clearTimeout(timer);
       if (nav) nav.removeEventListener('navigatesuccess', changed);
       if (interval) clearInterval(interval);
       window.removeEventListener('popstate', changed);
       window.removeEventListener('hashchange', changed);
+    };
+  }
+
+  /**
+   * Keep the Components inventory fresh only while its tab is actually showing: scan when it appears,
+   * rescan on route changes, and detach everything when it is hidden or the panel closes.
+   */
+  private watchComponentsTab(): () => void {
+    const sync = () => {
+      const s = this.ui.get();
+      const active = s.open && !s.collapsed && s.tab === 'components';
+      if (active && !this.stopComponentsWatch) {
+        // Register before scanning: the scan updates the store, which re-enters this function.
+        this.stopComponentsWatch = this.watchRoute(() => this.scanComponents());
+        this.scanComponents();
+      } else if (!active && this.stopComponentsWatch) {
+        this.stopComponentsWatch();
+        this.stopComponentsWatch = null;
+      }
+    };
+    sync();
+    const unsub = this.ui.subscribe(sync);
+    return () => {
+      unsub();
+      this.stopComponentsWatch?.();
+      this.stopComponentsWatch = null;
     };
   }
 

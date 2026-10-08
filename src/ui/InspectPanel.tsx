@@ -73,7 +73,8 @@ export function InspectPanel() {
   );
 }
 
-function ReportView({ report, heading }: { report: ElementReport; heading?: string }) {
+/** The theme tokens a report found, grouped by category, each editable in place. */
+export function TokenGroups({ report }: { report: ElementReport }) {
   const session = useSession();
   const [open, setOpen] = useState<Set<string>>(new Set());
   const byCat = new Map<TokenCategory, { entry: TokenEntry; props: string[] }[]>();
@@ -85,9 +86,6 @@ function ReportView({ report, heading }: { report: ElementReport; heading?: stri
   }
   return (
     <>
-      <h4 style={{ margin: '8px 0 0' }}>
-        {heading ? `${heading}: ` : ''}Theme tokens ({report.tokens.length})
-      </h4>
       {report.tokens.length === 0 && <div className="muted">No Astryx theme tokens were detected for this element.</div>}
       {CATEGORY_ORDER.filter((c) => byCat.has(c)).map((c) => (
         <section key={c}>
@@ -110,6 +108,17 @@ function ReportView({ report, heading }: { report: ElementReport; heading?: stri
           ))}
         </section>
       ))}
+    </>
+  );
+}
+
+function ReportView({ report, heading }: { report: ElementReport; heading?: string }) {
+  return (
+    <>
+      <h4 style={{ margin: '8px 0 0' }}>
+        {heading ? `${heading}: ` : ''}Theme tokens ({report.tokens.length})
+      </h4>
+      <TokenGroups report={report} />
 
       <details>
         <summary>All properties ({report.properties.length})</summary>

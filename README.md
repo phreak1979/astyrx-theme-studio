@@ -33,17 +33,17 @@ src/
 ### `src/dev/mountAstryxThemeStudio.tsx`
 
 ```tsx
-import React from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { AstryxThemeStudio } from 'astryx-theme-studio/dev';
+import React from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { AstryxThemeStudio } from "astryx-theme-studio/dev";
 
 let root: Root | undefined;
 
 export function mountAstryxThemeStudio() {
   if (root) return;
 
-  const host = document.createElement('div');
-  host.id = 'astryx-theme-studio-root';
+  const host = document.createElement("div");
+  host.id = "astryx-theme-studio-root";
   document.body.appendChild(host);
 
   root = createRoot(host);
@@ -51,7 +51,7 @@ export function mountAstryxThemeStudio() {
   root.render(
     <React.StrictMode>
       <AstryxThemeStudio />
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }
 ```
@@ -63,21 +63,21 @@ The studio renders in its own React root beside your app. It does not wrap or re
 Mount your app as usual, then add the dev-only branch:
 
 ```tsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
-if (import.meta.env.DEV && import.meta.env.VITE_THEME_DEV === 'true') {
-  void import('./dev/mountAstryxThemeStudio').then(
+if (import.meta.env.DEV && import.meta.env.VITE_THEME_DEV === "true") {
+  void import("./dev/mountAstryxThemeStudio").then(
     ({ mountAstryxThemeStudio }) => {
       mountAstryxThemeStudio();
-    }
+    },
   );
 }
 ```
@@ -104,13 +104,13 @@ Astryx does not export its `package.json`, so the studio cannot read its own pee
 
 ```ts
 // vite.config.ts
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 // Loaded defensively so a build where this dev dependency is not installed still works.
 async function studioVersionPlugin() {
   try {
-    const { astryxThemeStudio } = await import('astryx-theme-studio/vite');
+    const { astryxThemeStudio } = await import("astryx-theme-studio/vite");
     return astryxThemeStudio();
   } catch {
     return null;
@@ -137,11 +137,11 @@ Or pass it directly: `<AstryxThemeStudio astryxVersion="0.6.5" />`. Without eith
 You might be tempted to write:
 
 ```tsx
-import { AstryxThemeStudio } from 'astryx-theme-studio/dev';
+import { AstryxThemeStudio } from "astryx-theme-studio/dev";
 
 <AstryxThemeStudio enabled={import.meta.env.DEV}>
   <App />
-</AstryxThemeStudio>
+</AstryxThemeStudio>;
 ```
 
 Avoid it. That hides the studio at runtime, but a static import still puts the studio's module in your production module graph (`npm run example:verify-prod` fails if you try it in the example app). The dev-only `import()` is statically unreachable in production, so the bundler drops the whole studio.
@@ -158,22 +158,23 @@ A small 🎨 launcher appears bottom-right (drag it anywhere; hover it and press
 
 ## Using it
 
-| Tab | What it does |
-|---|---|
-| **Theme** | Every Astryx token, grouped by category, with search (name, category, description, value) and a *Modified* filter. Colour picker + hex, number + unit, enum selectors, and a validated raw field for everything. Light and dark values are edited independently. |
+| Tab         | What it does                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Theme**   | Every Astryx token, grouped by category, with search (name, category, description, value) and a _Modified_ filter. Colour picker + hex, number + unit, enum selectors, and a validated raw field for everything. Light and dark values are edited independently.                                                                                                              |
 | **Inspect** | Turn on ◎ Inspect and click anything. You see the Astryx component (identified only from its stable `astryx-*` class, never guessed), its variant/size/state, and every theme token styling it, editable in place. Properties are labelled **theme token**, **component property**, **Astryx internal** or **application style**. Only theme tokens are editable or exported. |
-| **Impact** | *Show Impact* on any token highlights the visible elements using it on the current page, grouped by component. Click a result to scroll to it. As you navigate, the studio builds a per-route index of routes it has actually observed. It never claims impact on routes you have not visited. |
-| **Export** | Theme name/ID, theme health (validation + contrast), and export: **Copy Theme Code**, download `.ts`, download JSON, or an export package (`<id>Theme.ts`, `<id>.theme.json`, `metadata.json`, `README.md`). JSON import shows a diff and applies only when you press **Apply**. |
+| **Components** | Lists the Astryx components on the current page with instance counts, identified only from their stable `astryx-*` class (anything without one is not listed). Each component shows the variants, sizes and states in use (e.g. `variant: secondary×9, primary×3`), its instances (click one to scroll to and highlight it), and the theme tokens its first instance uses, editable in place. Edits change the global theme, exactly as in Inspect. It rescans when you open the tab, press **Rescan**, or navigate; it does nothing while the tab is hidden. |
+| **Impact**  | _Show Impact_ on any token highlights the visible elements using it on the current page, grouped by component. Click a result to scroll to it. As you navigate, the studio builds a per-route index of routes it has actually observed. It never claims impact on routes you have not visited.                                                                                |
+| **Export**  | Theme name/ID, theme health (validation + contrast), and export: **Copy Theme Code**, download `.ts`, download JSON, or an export package (`<id>Theme.ts`, `<id>.theme.json`, `metadata.json`, `README.md`). JSON import shows a diff and applies only when you press **Apply**.                                                                                              |
 
 Footer: **Auto / ☀ Light / 🌙 Dark** preview (Auto follows your app), undo/redo, reset (token, category, light, dark, or everything; multi-token resets ask first).
 
 ### Shortcuts
 
-| Keys | Action |
-|---|---|
-| Ctrl/Cmd + Shift + A | Open / close the studio |
-| Ctrl/Cmd + Shift + I | Toggle Inspect |
-| Esc | Leave Inspect / Impact |
+| Keys                     | Action                                                                  |
+| ------------------------ | ----------------------------------------------------------------------- |
+| Ctrl/Cmd + Shift + A     | Open / close the studio                                                 |
+| Ctrl/Cmd + Shift + I     | Toggle Inspect                                                          |
+| Esc                      | Leave Inspect / Impact                                                  |
 | Ctrl/Cmd + Z / Shift + Z | Undo / redo (when the studio is open and you are not typing in a field) |
 
 Change or disable any of them: `<AstryxThemeStudio shortcuts={{ open: 'Mod+Shift+K', inspect: false }} />`.
@@ -182,19 +183,19 @@ Change or disable any of them: `<AstryxThemeStudio shortcuts={{ open: 'Mod+Shift
 
 ```tsx
 <AstryxThemeStudio
-  astryxVersion="0.6.5"      // default: injected by the Vite plugin
-  persist                    // save the working theme to localStorage (default true)
-  storageKey="my-key"        // default: astryx-theme-studio:working-theme
+  astryxVersion="0.6.5" // default: injected by the Vite plugin
+  persist // save the working theme to localStorage (default true)
+  storageKey="my-key" // default: astryx-theme-studio:working-theme
   defaultOpen={false}
-  profileThresholdMs={50}    // log a dev warning when an impact scan is slower than this
+  profileThresholdMs={50} // log a dev warning when an impact scan is slower than this
 />
 ```
 
 ### Things worth knowing
 
-- **Refresh persistence.** After a reload the studio offers *Continue editing* / *Discard* and applies nothing until you choose. The Astryx version is stored with it; a mismatch is flagged.
+- **Refresh persistence.** After a reload the studio offers _Continue editing_ / _Discard_ and applies nothing until you choose. The Astryx version is stored with it; a mismatch is flagged.
 - **Original values** are read from your app's actual theme, not Astryx's defaults, so "original" means what your app does today.
-- **Nested `<Theme>` regions** keep their own values by default (this mirrors how Astryx scopes themes). Tick *Also override nested Theme regions* to flatten them too.
+- **Nested `<Theme>` regions** keep their own values by default (this mirrors how Astryx scopes themes). Tick _Also override nested Theme regions_ to flatten them too.
 - **Generated tokens.** Astryx can generate some tokens from scales (typography, radius, motion, colour). Values you set are exported as explicit `tokens`, which always take precedence.
 - **Impact accuracy.** Impact reads your stylesheets. Cross-origin stylesheets cannot be read; the studio says so and labels results as observed rather than complete.
 - **Contrast checks** cover a fixed set of text/surface/accent pairs and are shown before export; you can make failures block export.
@@ -247,13 +248,13 @@ Build production application
 The exported file is a normal Astryx theme:
 
 ```ts
-import { defineTheme } from '@astryxdesign/core/theme';
+import { defineTheme } from "@astryxdesign/core/theme";
 
 export const dreamscoreTheme = defineTheme({
-  name: 'dreamscore',
+  name: "dreamscore",
   tokens: {
-    '--color-accent': ['#1663AA', '#4D9CE6'],
-    '--radius-element': '6px',
+    "--color-accent": ["#1663AA", "#4D9CE6"],
+    "--radius-element": "6px",
   },
 });
 ```

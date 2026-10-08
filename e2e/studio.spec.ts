@@ -220,6 +220,70 @@ test.describe('inspect', () => {
   });
 });
 
+test.describe('components', () => {
+  const row = (page: import('@playwright/test').Page, cls: string) => page.locator(`[data-component="${cls}"]`);
+  const openTab = (page: import('@playwright/test').Page) => page.locator('.tabs button', { hasText: 'Components' }).click();
+
+  test('tab sits between Inspect and Impact and nothing is scanned until it is shown', async ({ page }) => {
+    await openStudio(page);
+    await expect(page.locator('.tabs button')).toHaveText(['Theme', 'Inspect', 'Components', 'Impact', 'Export']);
+    expect(await page.evaluate(() => (globalThis as any).__ASTRYX_THEME_STUDIO__.ui.get().scan)).toBeNull();
+    await openTab(page);
+    await expect(page.getByTestId('components-total')).toContainText('instance');
+    expect(await page.evaluate(() => !!(globalThis as any).__ASTRYX_THEME_STUDIO__.ui.get().scan)).toBe(true);
+  });
+
+  test('lists the page components with counts and props, and highlights an instance without touching the DOM', async ({ page }) => {
+    await openStudio(page);
+    const before = await page.locator('#root').evaluate((e) => e.outerHTML);
+    await openTab(page);
+    await expect(row(page, 'astryx-button')).toBeVisible();
+    await expect(row(page, 'astryx-card')).toBeVisible();
+    // Parts and non-components are not listed as components of their own.
+    await expect(row(page, 'astryx-card-header')).toHaveCount(0);
+    await row(page, 'astryx-button').locator('.group-btn').click();
+    await expect(row(page, 'astryx-button').locator('dt', { hasText: 'variant' })).toBeVisible();
+    await row(page, 'astryx-button').locator('button', { hasText: /^Instances/ }).click();
+    await row(page, 'astryx-button').locator('.el-btn').first().click();
+    // The overlay paints on the next animation frame, and the focus box clears itself after ~1.8s.
+    await expect
+      .poll(() => page.locator('#astryx-theme-studio-overlay').evaluate((h) => h.shadowRoot!.querySelectorAll('.box.focus').length), { timeout: 1500 })
+      .toBe(1);
+    expect(await page.locator('#root').evaluate((e) => e.outerHTML)).toBe(before);
+  });
+
+  test('theme tokens shown for a component edit the global theme', async ({ page }) => {
+    await openStudio(page);
+    await openTab(page);
+    await row(page, 'astryx-button').locator('.group-btn').click();
+    await row(page, 'astryx-button').locator('button', { hasText: /^Theme tokens$/ }).click();
+    await expect(row(page, 'astryx-button').locator('h4', { hasText: /Theme tokens used \([1-9]/ })).toBeVisible();
+    await row(page, 'astryx-button').locator('.tok[data-token="--radius-element"] .tok-row').click();
+    await page.locator('input[aria-label="--radius-element value"]').first().fill('0px');
+    await expect(page.locator('main button', { hasText: 'New order' })).toHaveCSS('border-radius', '0px');
+    await page.locator('.tabs button', { hasText: 'Theme' }).click();
+    await expect(page.locator('.chip', { hasText: '1 modified' })).toBeVisible();
+  });
+
+  test('rescans when the route changes while the tab is open', async ({ page }) => {
+    await openStudio(page);
+    await openTab(page);
+    await expect(row(page, 'astryx-card')).toBeVisible();
+    await expect(row(page, 'astryx-text-input')).toHaveCount(0);
+    await page.locator('nav button', { hasText: 'Customers' }).click();
+    await expect(row(page, 'astryx-text-input')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Rescan picks up a component rendered after the last scan', async ({ page }) => {
+    await openStudio(page);
+    await openTab(page);
+    await expect(row(page, 'astryx-text-input')).toHaveCount(0);
+    await page.locator('nav button', { hasText: 'Customers' }).click();
+    await page.locator('button', { hasText: 'Rescan' }).click();
+    await expect(row(page, 'astryx-text-input')).toBeVisible();
+  });
+});
+
 test.describe('impact', () => {
   test('shows visible consumers, highlights them, and builds a per-route index', async ({ page }) => {
     await openStudio(page);
